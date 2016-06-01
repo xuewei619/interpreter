@@ -4,7 +4,7 @@ Created on 2016年5月27日
 
 @author: xuewei
 '''
-from compiler.ast import Node
+
 symbols = ['+','-','*','/','(',')','==','!=','||','&&']
 priority = {"+":1,"-":1,"*":2,"/":2,"(":0,")":0,'==':3,'!=':3,'||':3,'&&':3}
 
@@ -121,15 +121,8 @@ def rpn(list):
 	operators.reverse()
 	rpn_list.extend(operators)
 	return filter(noBrackets,rpn_list)
-
-def addNode(head,value):
-	if not head:
-		return head
-	child = exp(value)
-	if not head.getLeft():
-		head.set
-		
-					
+	
+#生成二叉树
 def tree(list,index):
 	length = len(list)
 	node = None			
