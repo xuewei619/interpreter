@@ -14,16 +14,39 @@ def isSymbol(char):
             return True
     return False
 
+#判断是否是字母
 def isCharacter(char):
     if (ord(char) >= ord('A') and ord(char) <= ord('Z')) or (ord(char) >= ord('a') and ord(char) <= ord('z')):
         return True
     return False
 
+#判断是否是数字
 def isNumber(char):
     if ord(char) >= ord('0') and ord(char) <= ord('9'):
         return True
     return False
 
+#判断是否是逻辑运算符
+def isLogicOperator(string,index):
+    length = len(string)
+    if string[index] == '=':
+        if index < length - 1 and string[index + 1] == '=':
+            return True
+        
+    if string[index] == '!':
+        if index < length - 1 and string[index + 1] == '=':
+            return True
+        
+    if string[index] == '|':
+        if index < length - 1 and string[index + 1] == '|':
+            return True
+    
+    if string[index] == '&':
+        if index < length - 1 and string[index + 1] == '&':
+            return True
+    return False
+
+#找到注释结束的地方
 def findCommentsEnd(string,start):
     length = len(string)
     end = start
@@ -67,10 +90,18 @@ def split(string):
             index = offset
             continue
         
+        if isLogicOperator(string, index):
+            list.append(string[index:index+2])
+            index += 2
+            continue
+        
         #各种符号
         if isSymbol(string[index]):
             list.append(string[index])
         
         index += 1
     return list
+
+string = "a=0.2232;b=2343;c=a+b"
+print split(string)
           
