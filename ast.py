@@ -11,14 +11,7 @@ class ast(object):
         self.__children = []
         
     def appendChild(self,obj):
-        self.__children.append(obj)
-        
-    def setEndIndex(self,index):
-        self.__endIndex = index
-     
-    def getEndIndex(self):
-         return self.__endIndex
-        
+        self.__children.append(obj)       
     
 class FunctionStatement(ast):
     def __init__(self,name):
@@ -40,22 +33,17 @@ class IfStatement(ast):
         
     def appendelseBody(self,elseBody):
         self.appendChild(elseBody)
-        
-    def setEndIndex(self,index):
-        super(IfStatement,self).setEndIndex(index)
-     
-    def getEndIndex(self):
-         return super(IfStatement,self).getEndIndex()
+    
         
 class WhileStatement(ast):
     def __init__(self):
-        self.__value = "while"
+        super(WhileStatement,self).__init__('while')
         
     def appendCondition(self,condition):
         self.appendChild(condition)
         
     def appendBody(self,body):
-        self.appendBody(body)
+        self.appendChild(body)
         
 #找到结束括号 list[index]必须是(
 def findEndBracket(list,index):
@@ -100,7 +88,8 @@ def getCondition(list,index):
 def getBody(list,index):
     offset = findEndBrace(list, index)
     body_list = list[index+1:offset]
-    body = parseList(body_list, 0)
+    result = parseList(body_list, 0)
+    body = result["statement"]
     return {"body" : body,"offset" : offset}
     
         
@@ -109,14 +98,20 @@ def parseList(list,index):
     length = len(list)
     while index < length:
         if list[index] == 'if':            
-            ifStmt = parseIf(list,index)
-            tree.appendChild(ifStmt)
-            index = ifStmt.getEndIndex()
+            result = parseIf(list,index)
+            tree.appendChild(result["statement"])
+            index = result["offset"]
+            continue
+        
+        if list[index] == 'while':            
+            result = parseWhile(list,index)
+            tree.appendChild(result["statement"])
+            index = result["offset"]
             continue
             
         index += 1
-    tree.setEndIndex(index)
-    return tree
+    
+    return {"statement" : tree,"offset" : index}
     
 
 def parseIf(list,index):     
@@ -146,17 +141,27 @@ def parseIf(list,index):
             ifStmt.appendelseBody(elseBody)
             index = offset + 1            
         index += 1
-    ifStmt.setEndIndex(index)
-    return ifStmt
+    return {"statement" : ifStmt, "offset": index}
 
 
 def parseWhile(list,index):
+    
+    whileStmt = WhileStatement()
     length = len(list)
     while index < length:
         if list[index] == '(':
-            offset = findEndBracket(list, index)
-            exp_list = list[index+1:offset]
-            condition = exp.generateTree(exp_list)
+            result = getCondition(list, index)
+            condition = result["condition"]
+            offset = result["offset"]
+            whileStmt.appendCondition(condition)
+            index = offset + 1
             
+        if list[index] == '{':
+            result = getBody(list, index)
+            whileBody = result["body"]
+            offset = result["offset"]
+            whileStmt.appendCondition(whileBody)
+            index = offset + 1
+        
         index += 1
-
+    return {"statement" : whileStmt,"offset" : index}
