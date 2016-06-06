@@ -4,7 +4,7 @@ Created on 2016年5月27日
 
 @author: xuewei
 '''
-
+import exp
 class ast(object):
     def __init__(self,value):
         self.__value = value
@@ -12,6 +12,12 @@ class ast(object):
         
     def appendChild(self,obj):
         self.__children.append(obj)
+        
+    def setEndIndex(self,index):
+        self.__endIndex = index
+     
+    def getEndIndex(self):
+         return self.__endIndex
         
     
 class FunctionStatement(ast):
@@ -35,6 +41,12 @@ class IfStatement(ast):
     def appendelseBody(self,elseBody):
         self.appendChild(elseBody)
         
+    def setEndIndex(self,index):
+        super(IfStatement,self).setEndIndex(index)
+     
+    def getEndIndex(self):
+         return super(IfStatement,self).getEndIndex()
+        
 class WhileStatement(ast):
     def __init__(self):
         self.__value = "while"
@@ -45,68 +57,106 @@ class WhileStatement(ast):
     def appendBody(self,body):
         self.appendBody(body)
         
-        
+#找到结束括号 list[index]必须是(
+def findEndBracket(list,index):
+    stack = []
+    list_length = len(list)
+    for i in range(index, list_length):
+        if list[i] == '(' or list[i] == ')':        
+            length = len(stack)  
+            if length > 0:
+                if stack[length - 1] != list[i]:
+                    stack.pop()
+                else:
+                    stack.append(list[i])
+            else:
+                stack.append(list[i])
+        if len(stack) == 0:
+            return i
 
-def findPreBrace(string,index):
+#找到结束大括号 list[index]必须是{   
+def findEndBrace(list,index):
+    stack = []
+    list_length = len(list)
+    for i in range(index, list_length):
+        if list[i] == '{' or list[i] == '}':        
+            length = len(stack)  
+            if length > 0:
+                if stack[length - 1] != list[i]:
+                    stack.pop()
+                else:
+                    stack.append(list[i])
+            else:
+                stack.append(list[i])
+        if len(stack) == 0:
+            return i
+
+def getCondition(list,index):
+    offset = findEndBracket(list, index)
+    exp_list = list[index+1:offset]
+    condition = exp.generateTree(exp_list)
+    return {"condition" : condition,"offset" : offset}
+
+def getBody(list,index):
+    offset = findEndBrace(list, index)
+    body_list = list[index+1:offset]
+    body = parseList(body_list, 0)
+    return {"body" : body,"offset" : offset}
     
-    length = len(string)
-    while not script[index] == '{':
-        if not index == length - 1:
-            print "error: no prebraces"
-            return None
+        
+def parseList(list,index):
+    tree = ast('ast')
+    length = len(list)
+    while index < length:
+        if list[index] == 'if':            
+            ifStmt = parseIf(list,index)
+            tree.appendChild(ifStmt)
+            index = ifStmt.getEndIndex()
+            continue
+            
         index += 1
-    return index
+    tree.setEndIndex(index)
+    return tree
+    
 
-def parseIf(string,parent,index):
-    ifStmt = IfStatement()    
-    #condition
-    begin = index
-    index = findPreBrace(string, begin)            
-    condition = string[begin:index]
-    index += 1
-    print condition
-    ifStmt.appendCondition(condition)
-    #if_body
-    index += 1
-    ifBody = ''
-    while not string[index] == '}':
-        if not string[index] == ' ':
-            ifBody += string[index]
-        index += 1
-    print ifBody
-    ifStmt.appendifBody(ifBody)
-    #else_body
-    index += 1
-    while True:
-        if string[index] == ' ':
+def parseIf(list,index):     
+    
+    ifStmt = IfStatement()
+    length = len(list)    
+    while index < length:
+        if list[index] == '(':            
+            result = getCondition(list, index)
+            condition = result["condition"]
+            offset = result["offset"]
+            ifStmt.appendCondition(condition)
+            index = offset + 1            
+        
+        if index < length and list[index] == '{':
+            result = getBody(list, index)
+            ifBody = result["body"]
+            offset = result["offset"]
+            ifStmt.appendifBody(ifBody)
+            index = offset + 1
+        
+        if index < length and list[index] == 'else':
             index += 1
-            continue                
-        if string[index] == 'e':
-            if index < length - 3 and string[index:index+4] == 'else':
-                index += 3
-                index = findPreBrace(string, index)
-                index += 1
-                elseBody = ''
-                while not string[index] == '}':
-                    if not string[index] == ' ':
-                        elseBody += string[index]
-                    index += 1 
-                print elseBody
-                ifStmt.appendelseBody(elseBody)
-        else:
-            break
+            result = getBody(list, index)
+            elseBody = result["body"]
+            offset = result["offset"]
+            ifStmt.appendelseBody(elseBody)
+            index = offset + 1            
+        index += 1
+    ifStmt.setEndIndex(index)
+    return ifStmt
 
 
-script = "if(1==1)"
-tree = ast("content")
-i = 0
-length = len(script)
-while(i < length):
-    if script[i] == "i":
-        if i < length - 1 and script[i + 1] == "f":
-            i += 2
-            parseIf(script, tree, i)
-             
-                
-    i+=1
+def parseWhile(list,index):
+    length = len(list)
+    while index < length:
+        if list[index] == '(':
+            offset = findEndBracket(list, index)
+            exp_list = list[index+1:offset]
+            condition = exp.generateTree(exp_list)
+            
+        index += 1
 

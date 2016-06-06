@@ -4,8 +4,7 @@ Created on 2016年6月1日
 
 @author: xuewei
 '''
-
-symbols = ['+','-','*','/','(',')',',','=',';','{','}','[',']']
+symbols = ['+','-','*','/','(',')',',','=',';','{','}','[',']','\"',"\'",'==','!=','&&','||']
 #判断是否是运算符号
 def isSymbol(char):
     length = len(symbols)
@@ -83,7 +82,7 @@ def split(string):
         if isNumber(string[index]):
             token = string[index]
             offset = index + 1
-            while offset < length and (isNumber(string[offset]) or string[offset] == '.'):
+            while offset < length and (isNumber(string[offset]) or (string[offset] == '.')):
                 token += string[offset]
                 offset += 1
             list.append(token)
@@ -102,6 +101,3 @@ def split(string):
         index += 1
     return list
 
-string = "a=0.2232;b=2343;c=a+b"
-print split(string)
-          
