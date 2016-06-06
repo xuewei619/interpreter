@@ -15,10 +15,17 @@ class ast(object):
     
 class FunctionStatement(ast):
     def __init__(self,name):
-        self.__value = name
+        super(FunctionStatement,self).__init__('function')
+        self.__arguments = []
+    
+    def appendArguments(self,param):
+        self.__arguments.append(param)    
         
     def appendBody(self,body):
-        self.appendChild(body)
+        self.appendChild(body) 
+        
+    def getArguments(self):
+        return self.__arguments
         
         
 class IfStatement(ast):
@@ -165,3 +172,16 @@ def parseWhile(list,index):
         
         index += 1
     return {"statement" : whileStmt,"offset" : index}
+
+# def parseFunc(list,index):
+#     functionStmt = FunctionStatement()
+#     length = len(list)
+#     while index < length:
+#         if list[index] == '(':
+#             index += 1
+#         if list[index] == '{':
+#             result = getBody(list, index)
+#             funcBody = result["body"]
+#             offset = result["offset"]
+#             functionStmt.appendBody(body)
+            
