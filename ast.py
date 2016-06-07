@@ -4,7 +4,7 @@ Created on 2016年5月27日
 
 @author: xuewei
 '''
-import exp
+import exp,lex
 class ast(object):
     def __init__(self,value):
         self.__value = value
@@ -14,9 +14,15 @@ class ast(object):
         self.__children.append(obj)       
     
 class FunctionStatement(ast):
-    def __init__(self,name):
+    def __init__(self):
         super(FunctionStatement,self).__init__('function')
         self.__arguments = []
+    
+    def setName(self,name):
+        self.__name = name
+    
+    def getName(self):
+        return self.__name
     
     def appendArguments(self,param):
         self.__arguments.append(param)    
@@ -52,7 +58,7 @@ class WhileStatement(ast):
     def appendBody(self,body):
         self.appendChild(body)
         
-#找到结束括号 list[index]必须是(
+#找到结束括号
 def findEndBracket(list,index):
     stack = []
     list_length = len(list)
@@ -68,8 +74,9 @@ def findEndBracket(list,index):
                 stack.append(list[i])
         if len(stack) == 0:
             return i
+    return None
 
-#找到结束大括号 list[index]必须是{   
+#找到结束大括号
 def findEndBrace(list,index):
     stack = []
     list_length = len(list)
@@ -85,6 +92,7 @@ def findEndBrace(list,index):
                 stack.append(list[i])
         if len(stack) == 0:
             return i
+    return None
 
 def getCondition(list,index):
     offset = findEndBracket(list, index)
@@ -94,11 +102,10 @@ def getCondition(list,index):
 
 def getBody(list,index):
     offset = findEndBrace(list, index)
-    body_list = list[index+1:offset]
+    body_list = list[index + 1 : offset]
     result = parseList(body_list, 0)
     body = result["statement"]
     return {"body" : body,"offset" : offset}
-    
         
 def parseList(list,index):
     tree = ast('ast')
@@ -131,7 +138,8 @@ def parseIf(list,index):
             condition = result["condition"]
             offset = result["offset"]
             ifStmt.appendCondition(condition)
-            index = offset + 1            
+            index = offset + 1     
+            continue       
         
         if index < length and list[index] == '{':
             result = getBody(list, index)
@@ -139,6 +147,7 @@ def parseIf(list,index):
             offset = result["offset"]
             ifStmt.appendifBody(ifBody)
             index = offset + 1
+            continue
         
         if index < length and list[index] == 'else':
             index += 1
@@ -146,7 +155,8 @@ def parseIf(list,index):
             elseBody = result["body"]
             offset = result["offset"]
             ifStmt.appendelseBody(elseBody)
-            index = offset + 1            
+            index = offset + 1    
+            continue        
         index += 1
     return {"statement" : ifStmt, "offset": index}
 
@@ -162,6 +172,7 @@ def parseWhile(list,index):
             offset = result["offset"]
             whileStmt.appendCondition(condition)
             index = offset + 1
+            continue
             
         if list[index] == '{':
             result = getBody(list, index)
@@ -169,19 +180,36 @@ def parseWhile(list,index):
             offset = result["offset"]
             whileStmt.appendCondition(whileBody)
             index = offset + 1
+            continue
         
         index += 1
     return {"statement" : whileStmt,"offset" : index}
 
-# def parseFunc(list,index):
-#     functionStmt = FunctionStatement()
-#     length = len(list)
-#     while index < length:
-#         if list[index] == '(':
-#             index += 1
-#         if list[index] == '{':
-#             result = getBody(list, index)
-#             funcBody = result["body"]
-#             offset = result["offset"]
-#             functionStmt.appendBody(body)
-            
+def parseFunc(list,index):
+    functionStmt = FunctionStatement()
+    length = len(list)
+    while index < length:
+        
+        if list[index] == 'function':
+            index += 1
+            functionStmt.setName(list[index])
+            continue
+        
+        if list[index] == '(':
+            offset = findEndBracket(list, index)
+            params = list[index + 1 : offset]
+            for i in range(0,len(params)):
+                if not lex.isSymbol(params[i]):
+                    functionStmt.appendArguments(params[i])    
+            index = offset + 1
+            continue
+        if list[index] == '{':
+            result = getBody(list, index)
+            funcBody = result["body"]
+            offset = result["offset"]
+            functionStmt.appendBody(body)
+            index = offset + 1
+            continue
+        index += 1
+    return {"statement" : functionStmt,"offset":index}
+             
