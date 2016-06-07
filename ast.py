@@ -122,6 +122,12 @@ def parseList(list,index):
             tree.appendChild(result["statement"])
             index = result["offset"]
             continue
+        
+        if list[index] == 'function':
+            result = parseFunc(list, index)
+            tree.appendChild(result["statement"])
+            index = result["offset"]
+            continue
             
         index += 1
     
@@ -207,7 +213,7 @@ def parseFunc(list,index):
             result = getBody(list, index)
             funcBody = result["body"]
             offset = result["offset"]
-            functionStmt.appendBody(body)
+            functionStmt.appendBody(funcBody)
             index = offset + 1
             continue
         index += 1
