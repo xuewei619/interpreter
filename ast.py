@@ -11,7 +11,41 @@ class ast(object):
         self.__children = []
         
     def appendChild(self,obj):
-        self.__children.append(obj)       
+        self.__children.append(obj)     
+        
+class Statement(ast):
+    def __init__(self):
+        super(Statement,self).__init__('statement')
+    
+    def setIdentifier(self,name):
+        self.__identifier = name
+        
+    def getIdentifier(self):
+        return self.__identifier    
+    
+    def setExpression(self,exp):
+        self.__exp = exp
+        
+    def getExpression(self):
+        return self.__exp    
+    
+    def setHasVar(self,bool):
+        self.__hasVar = bool
+    
+    def hasVar(self):
+        return self.__hasVar
+    
+    def setHasEqual(self,bool):
+        self.__hasEqual = bool
+    
+    def hasEqual(self):
+        return self.__hasEqual    
+    
+    def setHasReturn(self,bool):
+        self.__hasReturn = bool
+    
+    def hasReturn(self):
+        return self.__hasReturn
     
 class FunctionStatement(ast):
     def __init__(self):
@@ -94,6 +128,14 @@ def findEndBrace(list,index):
             return i
     return None
 
+#找封号
+def findSemicolon(list,index):
+    length = len(list)
+    for i in range(index,length):
+        if list[i] == ';':
+            return i
+    return None
+
 def getCondition(list,index):
     offset = findEndBracket(list, index)
     exp_list = list[index+1:offset]
@@ -128,14 +170,14 @@ def parseList(list,index):
             tree.appendChild(result["statement"])
             index = result["offset"]
             continue
-            
-        index += 1
-    
+        
+        result = parseStmt(list, index)
+        tree.appendChild(result["statement"])
+        index = result["offset"]            
     return {"statement" : tree,"offset" : index}
     
 
-def parseIf(list,index):     
-    
+def parseIf(list,index):        
     ifStmt = IfStatement()
     length = len(list)    
     while index < length:
@@ -163,12 +205,12 @@ def parseIf(list,index):
             ifStmt.appendelseBody(elseBody)
             index = offset + 1    
             continue        
+        
         index += 1
     return {"statement" : ifStmt, "offset": index}
 
 
-def parseWhile(list,index):
-    
+def parseWhile(list,index):    
     whileStmt = WhileStatement()
     length = len(list)
     while index < length:
@@ -194,8 +236,7 @@ def parseWhile(list,index):
 def parseFunc(list,index):
     functionStmt = FunctionStatement()
     length = len(list)
-    while index < length:
-        
+    while index < length:        
         if list[index] == 'function':
             index += 1
             functionStmt.setName(list[index])
@@ -209,6 +250,7 @@ def parseFunc(list,index):
                     functionStmt.appendArguments(params[i])    
             index = offset + 1
             continue
+        
         if list[index] == '{':
             result = getBody(list, index)
             funcBody = result["body"]
@@ -216,6 +258,35 @@ def parseFunc(list,index):
             functionStmt.appendBody(funcBody)
             index = offset + 1
             continue
+        
         index += 1
     return {"statement" : functionStmt,"offset":index}
-             
+
+def parseStmt(list,index):
+    stmt = Statement()
+    length = len(list)
+    offset = findSemicolon(list, index)
+    while index < offset:
+        print index
+        if list[index] == 'var':
+            stmt.setHasVar(True)
+            index += 1
+            continue
+        
+        if  list[index] == '=':           
+            exp_list = list[index + 1 : offset]
+            exp_tree = exp.generateTree(exp_list)
+            stmt.setExpression(exp_tree)
+            stmt.setHasEqual(True)
+            break
+        
+        if list[index] == 'return':
+            offset = findSemicolon(list, index)
+            exp_list = list[index + 1 : offset]
+            exp_tree = exp.generateTree(exp_list)
+            stmt.setExpression(exp_tree)
+            stmt.setHasReturn(True)
+            break
+     
+        index += 1
+    return {"statement" : stmt,"offset" : offset + 1}         
