@@ -40,3 +40,35 @@ def excuteExp(node):
             value = operate(node.getLeft().getValue(),node.getValue(),node.getRight().getValue())
             node.setValue(value)
     return node
+
+
+def execute(tree):
+    if tree == None:
+        return
+    
+    if tree.getValue() == 'if':
+        executeIf(tree)
+        
+    if tree.getValue() == 'statement':
+        executeStatement(tree)
+        
+    if tree.getValue() == 'ast':
+        children = tree.getChildren()
+        for i in range(0,len(children)):
+            execute(children[i])
+
+def executeIf(tree):
+    condition = tree.getCondition()
+    ifBody = tree.getIfBody()
+    elseBody = tree.getElseBody()
+    if excuteExp(condition).getValue():
+        if ifBody:
+            execute(ifBody)
+    else:
+        if elseBody:
+            execute(elseBody)
+            
+def executeStatement(tree):
+    expression = tree.getExpression()
+    if tree.hasPrint():
+        print excuteExp(expression).getValue()

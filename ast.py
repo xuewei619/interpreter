@@ -5,17 +5,30 @@ Created on 2016年5月27日
 @author: xuewei
 '''
 import exp,lex
+from test.test_xml_etree import getchildren
 class ast(object):
     def __init__(self,value):
         self.__value = value
         self.__children = []
         
     def appendChild(self,obj):
-        self.__children.append(obj)     
+        self.__children.append(obj)    
+        
+    def getValue(self):
+        return self.__value 
+    
+    def getChildren(self):
+        return self.__children
         
 class Statement(ast):
     def __init__(self):
         super(Statement,self).__init__('statement')
+    
+    def getValue(self):
+        return super(Statement,self).getValue()
+    
+    def getChildren(self):
+        return super(Statement,self).getChildren()
     
     def setIdentifier(self,name):
         self.__identifier = name
@@ -47,10 +60,23 @@ class Statement(ast):
     def hasReturn(self):
         return self.__hasReturn
     
+    def setHasPrint(self,bool):
+        self.__hasPrint = bool
+    
+    def hasPrint(self):
+        return self.__hasPrint
+    
+    
 class FunctionStatement(ast):
     def __init__(self):
         super(FunctionStatement,self).__init__('function')
         self.__arguments = []
+        
+    def getValue(self):
+        return super(FunctionStatement,self).getValue()
+    
+    def getChildren(self):
+        return super(FunctionStatement,self).getChildren()
     
     def setName(self,name):
         self.__name = name
@@ -72,14 +98,38 @@ class IfStatement(ast):
     def __init__(self):
         super(IfStatement,self).__init__('if')
         
+    def getValue(self):
+        return super(IfStatement,self).getValue()
+    
+    def getChildren(self):
+        return super(IfStatement,self).getChildren()
+        
     def appendCondition(self,condition):
         self.appendChild(condition)
         
-    def appendifBody(self,ifBody):
+    def appendIfBody(self,ifBody):
         self.appendChild(ifBody)
         
-    def appendelseBody(self,elseBody):
+    def appendElseBody(self,elseBody):
         self.appendChild(elseBody)
+        
+    def getCondition(self):
+        children = self.getChildren()
+        if children[0]:
+            return children[0]
+        return None
+    
+    def getIfBody(self):
+        children = self.getChildren()
+        if children[1]:
+            return children[1]
+        return None
+    
+    def getElseBody(self):
+        children = self.getChildren()
+        if children[2]:
+            return children[2]
+        return None
     
         
 class WhileStatement(ast):
@@ -193,7 +243,7 @@ def parseIf(list,index):
             result = getBody(list, index)
             ifBody = result["body"]
             offset = result["offset"]
-            ifStmt.appendifBody(ifBody)
+            ifStmt.appendIfBody(ifBody)
             index = offset + 1
             continue
         
@@ -202,7 +252,7 @@ def parseIf(list,index):
             result = getBody(list, index)
             elseBody = result["body"]
             offset = result["offset"]
-            ifStmt.appendelseBody(elseBody)
+            ifStmt.appendElseBody(elseBody)
             index = offset + 1    
             continue        
         
@@ -266,8 +316,7 @@ def parseStmt(list,index):
     stmt = Statement()
     length = len(list)
     offset = findSemicolon(list, index)
-    while index < offset:
-        print index
+    while index < offset:        
         if list[index] == 'var':
             stmt.setHasVar(True)
             index += 1
@@ -286,6 +335,14 @@ def parseStmt(list,index):
             exp_tree = exp.generateTree(exp_list)
             stmt.setExpression(exp_tree)
             stmt.setHasReturn(True)
+            break
+        
+        if list[index] == 'print':
+            offset = findSemicolon(list, index)
+            exp_list = list[index + 1 : offset]
+            exp_tree = exp.generateTree(exp_list)
+            stmt.setExpression(exp_tree)
+            stmt.setHasPrint(True)
             break
      
         index += 1
