@@ -6,6 +6,7 @@ Created on 2016年6月8日
 '''
 import lex
 from ast import isKeyword
+from exp import exp
 
 class IdentifierStack(object):
     def __init__(self):
@@ -16,7 +17,7 @@ class IdentifierStack(object):
         
     def push(self,key,value):
         map = {"identifier" : key,"value" : value}
-        if self.get(key):
+        if self.get(key) != None:
             self.set(key, value)
         else:            
             self.__stack.append(map)
@@ -60,7 +61,7 @@ class IdentifierStack(object):
         else:
             return False
         
-def assign(token,stack):   
+def assign(token,stack):      
     try:
         token = int(token)
     except Exception:
@@ -70,10 +71,13 @@ def assign(token,stack):
             token = False
         elif not isKeyword(token):
             token = stack.get(token)
+            if token != None:
+                token = assign(token,stack)
     return token
 
 
-def operate(operand_left,operator,operand_right,stack):
+def operate(operand_left,operator,operand_right,stack):  
+    
     operand_left = assign(operand_left,stack)
     operand_right = assign(operand_right,stack)
     
@@ -93,7 +97,24 @@ def operate(operand_left,operator,operand_right,stack):
         return operand_left and operand_right
     if operator == '||':
         return operand_left or operand_right
+    if operator == '<':
+        return operand_left < operand_right
+    if operator == '>':
+        return operand_left > operand_right
+
+def copyExp(copied,new):
+    if copied == None:
+        return None
     
+    if new == None:
+        new = exp(copied.getValue())
+        
+    new.setLeft(copyExp(copied.getLeft(),new.getLeft()))
+    new.setRight(copyExp(copied.getRight(),new.getRight()))
+    
+    return new
+
+   
 def excuteExp(node,stack):
     if node == None:
         return node   
@@ -117,20 +138,22 @@ def execute(tree,stack):
     if tree.getValue() == 'if':
         stack = executeIf(tree,stack)
         
+    if tree.getValue() == 'while':
+        stack = executeWhile(tree, stack)
+        
     if tree.getValue() == 'statement':
         stack = executeStatement(tree,stack)
         
-    if tree.getValue() == 'ast':
-        stack.push("__local__",None)
+    if tree.getValue() == 'ast':       
         children = tree.getChildren()
         for i in range(0,len(children)):
-            stack = execute(children[i],stack)
-        stack.popLocal()
-    print stack.__dict__       
+            stack = execute(children[i],stack)        
+        print stack.__dict__       
     return stack
 
 def executeIf(tree,stack):    
-    condition = tree.getCondition()
+    stack.push("__local__",None)
+    condition = copyExp(tree.getCondition(), None)
     ifBody = tree.getIfBody()
     elseBody = tree.getElseBody()
     value = excuteExp(condition,stack).getValue()
@@ -141,19 +164,33 @@ def executeIf(tree,stack):
     else:
         if elseBody:
             stack = execute(elseBody,stack)
+    stack.popLocal()
+    return stack
+
+def executeWhile(tree,stack):
+    stack.push("__local__",None)
+    ###复制一棵二叉树
+    condition = copyExp(tree.getCondition(), None)
+    
+    body = tree.getBody()    
+    
+    while assign(excuteExp(condition,stack).getValue(),stack):
+        stack = execute(body,stack)
+        condition = copyExp(tree.getCondition(), None)
+    stack.popLocal()
     return stack
             
 def executeStatement(tree,stack):
-    expression = tree.getExpression()
+    expression = copyExp(tree.getExpression(), None)
     if tree.hasPrint():
         value = excuteExp(expression,stack).getValue()
-        value = assign(value,stack)
-        print value
+        value = assign(value,stack)    
+        print value    
     
     if tree.getIdentifier() and tree.hasEqual():
         key = tree.getIdentifier()
         if expression:            
-            value = excuteExp(expression,stack).getValue()
+            value = assign(excuteExp(expression,stack).getValue(),stack)
         else:
             value = None
         

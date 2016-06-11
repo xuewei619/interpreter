@@ -15,12 +15,16 @@ from ast import  isKeyword
 # print exc.excuteExp(tree).getValue()
 
 
-string = "var a=0;if(false){var i = 1;print i;}else{var j = 2;print j;}print a;"
+string = "var a=0;while(a < 100){print a;a = a + 1;} print a;"
 list = lex.split(string)
 print list
 tree = ast.parseList(list,0)
 print tree
 
 exc.execute(tree["statement"],None)
-
+# map = IdentifierStack()
+# map.push("local",2)
+# print map.__dict__
+# map.push("local",1)
+# print map.__dict__
 

@@ -141,11 +141,29 @@ class WhileStatement(ast):
     def __init__(self):
         super(WhileStatement,self).__init__('while')
         
+    def getValue(self):
+        return super(WhileStatement,self).getValue()
+    
+    def getChildren(self):
+        return super(WhileStatement,self).getChildren()
+        
     def appendCondition(self,condition):
         self.appendChild(condition)
         
     def appendBody(self,body):
         self.appendChild(body)
+    
+    def getCondition(self):
+        children = self.getChildren()
+        if children[0]:
+            return children[0]
+        return None
+    
+    def getBody(self):
+        children = self.getChildren()
+        if children[1]:
+            return children[1]
+        return None
         
 #找到结束括号
 def findEndBracket(list,index):
