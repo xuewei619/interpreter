@@ -5,7 +5,7 @@ Created on 2016年5月27日
 @author: xuewei
 '''
 import exp,lex
-from test.test_xml_etree import getchildren
+keywords = ['var','function','if','while','print','return','true','false']
 class ast(object):
     def __init__(self,value):
         self.__value = value
@@ -23,6 +23,11 @@ class ast(object):
 class Statement(ast):
     def __init__(self):
         super(Statement,self).__init__('statement')
+        self.__identifier = None
+        self.__hasEqual = False
+        self.__hasPrint = False
+        self.__hasReturn = False
+        self.__hasVar = False
     
     def getValue(self):
         return super(Statement,self).getValue()
@@ -33,7 +38,7 @@ class Statement(ast):
     def setIdentifier(self,name):
         self.__identifier = name
         
-    def getIdentifier(self):
+    def getIdentifier(self):        
         return self.__identifier    
     
     def setExpression(self,exp):
@@ -198,6 +203,14 @@ def getBody(list,index):
     result = parseList(body_list, 0)
     body = result["statement"]
     return {"body" : body,"offset" : offset}
+
+def isKeyword(word):
+    flag = False
+    for i in range(0,len(keywords)):
+        if word == keywords[i]:
+            flag = True
+            break
+    return flag
         
 def parseList(list,index):
     tree = ast('ast')
@@ -254,9 +267,9 @@ def parseIf(list,index):
             offset = result["offset"]
             ifStmt.appendElseBody(elseBody)
             index = offset + 1    
-            continue        
+            break        
         
-        index += 1
+        index += 1       
     return {"statement" : ifStmt, "offset": index}
 
 
@@ -278,7 +291,7 @@ def parseWhile(list,index):
             offset = result["offset"]
             whileStmt.appendCondition(whileBody)
             index = offset + 1
-            continue
+            break
         
         index += 1
     return {"statement" : whileStmt,"offset" : index}
@@ -307,7 +320,7 @@ def parseFunc(list,index):
             offset = result["offset"]
             functionStmt.appendBody(funcBody)
             index = offset + 1
-            continue
+            break
         
         index += 1
     return {"statement" : functionStmt,"offset":index}
@@ -320,7 +333,7 @@ def parseStmt(list,index):
         if list[index] == 'var':
             stmt.setHasVar(True)
             index += 1
-            continue
+            continue       
         
         if  list[index] == '=':           
             exp_list = list[index + 1 : offset]
@@ -344,6 +357,12 @@ def parseStmt(list,index):
             stmt.setExpression(exp_tree)
             stmt.setHasPrint(True)
             break
+        
+        #####identifier
+        if not isKeyword(list[index]):
+            stmt.setIdentifier(list[index])
+            index += 1
+            continue
      
         index += 1
     return {"statement" : stmt,"offset" : offset + 1}         

@@ -5,6 +5,8 @@ Created on 2016年5月23日
 @author: xuewei
 '''
 import lex,exp,ast,exc
+from exc import IdentifierStack
+from ast import  isKeyword
 
 # string = "(4*5) + (2*3)"
 # list = lex.split(string)
@@ -13,12 +15,12 @@ import lex,exp,ast,exc
 # print exc.excuteExp(tree).getValue()
 
 
-string = "if(1==1){print 1*2+3;}else{print 2;}"
+string = "var a=0;if(false){var i = 1;print i;}else{var j = 2;print j;}print a;"
 list = lex.split(string)
 print list
 tree = ast.parseList(list,0)
 print tree
 
-exc.execute(tree["statement"])
-                
+exc.execute(tree["statement"],None)
+
 
